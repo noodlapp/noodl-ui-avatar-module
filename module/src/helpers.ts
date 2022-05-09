@@ -90,3 +90,9 @@ export function createTransform({
 
   return result.join(" ");
 }
+
+export function createTransformOrigin({ x, y }: { x: string; y: string }) {
+  if (!x && !y) return undefined;
+  if (x === "50%" && y === "50%") return undefined;
+  return `${x} ${y}`;
+}

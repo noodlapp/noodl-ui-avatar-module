@@ -1,6 +1,11 @@
 import * as Noodl from "@noodl/noodl-sdk";
 import React, { useRef } from "react";
-import { createBoxShadow, createOutline, createTransform } from "../helpers";
+import {
+  createBoxShadow,
+  createOutline,
+  createTransform,
+  createTransformOrigin,
+} from "../helpers";
 import { pointerProps } from "../node-events";
 
 const sizes = {
@@ -32,13 +37,21 @@ interface AvatarProps {
 
   src: string | undefined;
   text: string | undefined;
+  textScale: number;
   label: string | undefined;
   tooltip: string | undefined;
+
+  allowFocus: boolean;
+  tabindex: number;
 
   profilePositionX: string; // ex: "50px"
   profilePositionY: string; // ex: "50px"
   profileRotation: string; // ex: "45deg"
   profileScale: number;
+  profileOriginX: string;
+  profileOriginY: string;
+
+  style: React.CSSProperties;
 
   outDesiredSize: (value: number) => void;
 
@@ -92,12 +105,21 @@ function AvatarComponent({
   outlineWidth,
   src,
   text,
+  textScale,
   label,
   tooltip,
+
+  allowFocus,
+  tabindex,
+
   profilePositionX,
   profilePositionY,
   profileRotation,
   profileScale,
+  profileOriginX,
+  profileOriginY,
+
+  style,
 
   outDesiredSize,
 
@@ -120,11 +142,12 @@ function AvatarComponent({
 
   outDesiredSize && outDesiredSize(parseInt(desiredSize));
 
-  const style = {
+  const rootStyle = {
     display: "block",
     width: desiredSize,
     height: desiredSize,
     flex: `0 0 ${desiredSize}`,
+    ...style,
   };
 
   const outline = createOutline({
@@ -160,7 +183,10 @@ function AvatarComponent({
         scaleY: profileScale,
       });
 
-      // transform-origin: 20% 50%;
+      const transformOrigin = createTransformOrigin({
+        x: profileOriginX,
+        y: profileOriginY,
+      });
 
       return (
         <img
@@ -168,6 +194,7 @@ function AvatarComponent({
             width: "100%",
             height: "100%",
             transform,
+            transformOrigin,
           }}
           src={src}
           alt="avatar"
@@ -177,7 +204,7 @@ function AvatarComponent({
 
     // Use text
     if (text) {
-      const fontSize = parseInt(desiredSize) * 0.5;
+      const fontSize = parseInt(desiredSize) * (textScale || 0.5);
       // TODO: Font Family
       return (
         <span
@@ -194,16 +221,27 @@ function AvatarComponent({
     return defaultAvatarSvg();
   }
 
+  // Append extra attributes
+  const appendAttributes: React.HTMLAttributes<HTMLSpanElement> = {};
+  if (allowFocus) {
+    appendAttributes.tabIndex = tabindex;
+  }
+
   return (
     <span
       className="avatar"
-      style={style}
+      style={rootStyle}
       {...pointerProps({
         onMouseEnter,
         onMouseLeave,
       })}
     >
-      <span style={imageStyle} title={tooltip} aria-label={label}>
+      <span
+        style={imageStyle}
+        title={tooltip}
+        aria-label={label}
+        {...appendAttributes}
+      >
         {Boolean(children) ? { ...children } : content()}
       </span>
     </span>
@@ -287,6 +325,15 @@ export const avatarNode = Noodl.defineReactNode({
         standard: "The text that shall be inside the avatar.",
       },
     },
+    textScale: {
+      group: "Avatar",
+      displayName: "Text Scale",
+      type: "number",
+      tooltip: {
+        standard: "The scale of the text.",
+      },
+      default: 0.5,
+    },
     profilePositionX: {
       displayName: "Position X",
       group: "Avatar Profile",
@@ -324,6 +371,26 @@ export const avatarNode = Noodl.defineReactNode({
         name: "number",
       },
       default: 1,
+    },
+    profileOriginX: {
+      displayName: "Transform Origin X",
+      group: "Avatar Profile",
+      type: {
+        name: "number",
+        units: ["%", "px", "vw", "vh"],
+        defaultUnit: "%",
+      },
+      default: 50,
+    },
+    profileOriginY: {
+      displayName: "Transform Origin X",
+      group: "Avatar Profile",
+      type: {
+        name: "number",
+        units: ["%", "px", "vw", "vh"],
+        defaultUnit: "%",
+      },
+      default: 50,
     },
     outlineStyle: {
       displayName: "Outline Style",
@@ -407,6 +474,24 @@ export const avatarNode = Noodl.defineReactNode({
         standard: "Will be displayed as tooltip.",
       },
     },
+    allowFocus: {
+      displayName: "Allow Focus",
+      group: "Accessibility",
+      type: "boolean",
+      tooltip: {
+        standard: "Enable focus on the element.",
+      },
+      default: true,
+    },
+    tabindex: {
+      group: "Accessibility",
+      displayName: "Tab Index",
+      type: "number",
+      tooltip: {
+        standard: "The tab index of the component.",
+      },
+      default: 0,
+    },
   },
   // TODO: How to set the outputs?
   outputProps: {
@@ -424,6 +509,52 @@ export const avatarNode = Noodl.defineReactNode({
       displayName: "Hover End",
       type: "signal",
       group: "Hover Events",
+    },
+  },
+  inputCss: {
+    marginLeft: {
+      index: 1,
+      group: "Margin and padding",
+      displayName: "Margin Left",
+      type: {
+        name: "number",
+        units: ["px", "%"],
+        defaultUnit: "px",
+        marginPaddingComp: "margin-left",
+      },
+    },
+    marginRight: {
+      index: 2,
+      group: "Margin and padding",
+      displayName: "Margin Right",
+      type: {
+        name: "number",
+        units: ["px", "%"],
+        defaultUnit: "px",
+        marginPaddingComp: "margin-right",
+      },
+    },
+    marginTop: {
+      index: 3,
+      group: "Margin and padding",
+      displayName: "Margin Top",
+      type: {
+        name: "number",
+        units: ["px", "%"],
+        defaultUnit: "px",
+        marginPaddingComp: "margin-top",
+      },
+    },
+    marginBottom: {
+      index: 4,
+      group: "Margin and padding",
+      displayName: "Margin Bottom",
+      type: {
+        name: "number",
+        units: ["px", "%"],
+        defaultUnit: "px",
+        marginPaddingComp: "margin-bottom",
+      },
     },
   },
 });
