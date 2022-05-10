@@ -96,3 +96,17 @@ export function createTransformOrigin({ x, y }: { x: string; y: string }) {
   if (x === "50%" && y === "50%") return undefined;
   return `${x} ${y}`;
 }
+
+/**
+ * Returns a converted Noodl Family Font to a CSS font family.
+ *
+ * @param family The file path of font family to convert.
+ * @returns The CSS font family name.
+ */
+export function toFontClass(family: string) {
+  if (family && family.split(".").length > 1) {
+    family = family.replace(/\.[^/.]+$/, "");
+    family = family.split("/").pop();
+  }
+  return family;
+}

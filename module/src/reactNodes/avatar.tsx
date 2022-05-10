@@ -1,10 +1,10 @@
 import * as Noodl from "@noodl/noodl-sdk";
-import React, { useRef } from "react";
+import React from "react";
 import {
-  createBoxShadow,
   createOutline,
   createTransform,
   createTransformOrigin,
+  toFontClass,
 } from "../helpers";
 import { pointerProps } from "../node-events";
 
@@ -36,8 +36,12 @@ interface AvatarProps {
   outlineWidth: string | undefined;
 
   src: string | undefined;
+
   text: string | undefined;
   textScale: number;
+  textColor: string | undefined;
+  textFontFamily: string | undefined;
+
   label: string | undefined;
   tooltip: string | undefined;
 
@@ -54,9 +58,9 @@ interface AvatarProps {
   style: React.CSSProperties;
 
   outDesiredSize: (value: number) => void;
-
-  // hover start/end
-  // pointer down/up/enter
+  onClick: () => void;
+  onFocus: () => void;
+  onBlur: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
 }
@@ -103,9 +107,14 @@ function AvatarComponent({
   outlineStyle,
   outlineColor,
   outlineWidth,
+  
   src,
+  
   text,
   textScale,
+  textColor,
+  textFontFamily,
+
   label,
   tooltip,
 
@@ -123,6 +132,9 @@ function AvatarComponent({
 
   outDesiredSize,
 
+  onClick,
+  onFocus,
+  onBlur,
   onMouseEnter,
   onMouseLeave,
 }: AvatarProps) {
@@ -172,6 +184,11 @@ function AvatarComponent({
     backgroundSize: "cover",
   };
 
+  // default icon
+  if (!src || !text) {
+    imageStyle.backgroundColor = "#a9a9a9";
+  }
+
   function content() {
     // Use image
     if (src) {
@@ -205,11 +222,12 @@ function AvatarComponent({
     // Use text
     if (text) {
       const fontSize = parseInt(desiredSize) * (textScale || 0.5);
-      // TODO: Font Family
       return (
         <span
           style={{
             fontSize: fontSize + "px",
+            color: textColor,
+            fontFamily: toFontClass(textFontFamily),
           }}
         >
           {text}
@@ -228,18 +246,24 @@ function AvatarComponent({
   }
 
   return (
-    <span
-      className="avatar"
-      style={rootStyle}
-      {...pointerProps({
-        onMouseEnter,
-        onMouseLeave,
-      })}
-    >
+    <span className="avatar" style={rootStyle}>
       <span
         style={imageStyle}
         title={tooltip}
         aria-label={label}
+        {...pointerProps({
+          onMouseEnter,
+          onMouseLeave,
+          onClick,
+        })}
+        onFocus={function (evt) {
+          evt.stopPropagation();
+          onFocus && onFocus();
+        }}
+        onBlur={function (evt) {
+          evt.stopPropagation();
+          onBlur && onBlur();
+        }}
         {...appendAttributes}
       >
         {Boolean(children) ? { ...children } : content()}
@@ -253,6 +277,19 @@ export const avatarNode = Noodl.defineReactNode({
   getReactComponent() {
     return AvatarComponent;
   },
+  // @ts-ignore
+  visualStates: [
+    { name: "neutral", label: "Neutral" },
+    { name: "hover", label: "Hover" },
+  ],
+  // @ts-ignore
+  dynamicports: [
+    // TODO: dynamicports
+    {
+      condition: "size = custom",
+      inputs: ["sizeCustom"],
+    },
+  ],
   inputProps: {
     appearance: {
       displayName: "Appearance",
@@ -268,6 +305,7 @@ export const avatarNode = Noodl.defineReactNode({
       tooltip: {
         standard: "The appearance shape of the avatar.",
       },
+      allowVisualStates: true,
     },
     size: {
       displayName: "Size",
@@ -286,7 +324,6 @@ export const avatarNode = Noodl.defineReactNode({
       },
       default: "medium",
     },
-    // TODO: Dynamic property
     sizeCustom: {
       displayName: "Custom Size",
       group: "Avatar",
@@ -308,6 +345,7 @@ export const avatarNode = Noodl.defineReactNode({
         standard: "The color of the background.",
       },
       default: "transparent",
+      allowVisualStates: true,
     },
     src: {
       displayName: "Image Source",
@@ -316,9 +354,28 @@ export const avatarNode = Noodl.defineReactNode({
       tooltip: {
         standard: "The source of the image.",
       },
+      allowVisualStates: true,
+    },
+    textFontFamily: {
+      displayName: "Text Font Family",
+      group: "Avatar Text",
+      type: "font",
+      tooltip: {
+        standard: "The font family of the text.",
+      },
+      default: "Arial",
+    },
+    textColor: {
+      group: "Avatar Text",
+      displayName: "Color",
+      type: "color",
+      tooltip: {
+        standard: "The color of the text.",
+      },
+      default: "#000000",
     },
     text: {
-      group: "Avatar",
+      group: "Avatar Text",
       displayName: "Text",
       type: "string",
       tooltip: {
@@ -326,13 +383,14 @@ export const avatarNode = Noodl.defineReactNode({
       },
     },
     textScale: {
-      group: "Avatar",
+      group: "Avatar Text",
       displayName: "Text Scale",
       type: "number",
       tooltip: {
         standard: "The scale of the text.",
       },
       default: 0.5,
+      allowVisualStates: true,
     },
     profilePositionX: {
       displayName: "Position X",
@@ -343,6 +401,7 @@ export const avatarNode = Noodl.defineReactNode({
         defaultUnit: "px",
       },
       default: 0,
+      allowVisualStates: true,
     },
     profilePositionY: {
       displayName: "Position Y",
@@ -353,6 +412,7 @@ export const avatarNode = Noodl.defineReactNode({
         defaultUnit: "px",
       },
       default: 0,
+      allowVisualStates: true,
     },
     profileRotation: {
       displayName: "Rotation",
@@ -363,6 +423,7 @@ export const avatarNode = Noodl.defineReactNode({
         defaultUnit: "deg",
       },
       default: 0,
+      allowVisualStates: true,
     },
     profileScale: {
       displayName: "Scale",
@@ -371,6 +432,7 @@ export const avatarNode = Noodl.defineReactNode({
         name: "number",
       },
       default: 1,
+      allowVisualStates: true,
     },
     profileOriginX: {
       displayName: "Transform Origin X",
@@ -381,6 +443,7 @@ export const avatarNode = Noodl.defineReactNode({
         defaultUnit: "%",
       },
       default: 50,
+      allowVisualStates: true,
     },
     profileOriginY: {
       displayName: "Transform Origin X",
@@ -391,6 +454,7 @@ export const avatarNode = Noodl.defineReactNode({
         defaultUnit: "%",
       },
       default: 50,
+      allowVisualStates: true,
     },
     outlineStyle: {
       displayName: "Outline Style",
@@ -436,6 +500,7 @@ export const avatarNode = Noodl.defineReactNode({
       tooltip: {
         standard: "The style of the Outline.",
       },
+      allowVisualStates: true,
     },
     outlineColor: {
       displayName: "Outline Color",
@@ -445,6 +510,7 @@ export const avatarNode = Noodl.defineReactNode({
       tooltip: {
         standard: "The color of the Outline.",
       },
+      allowVisualStates: true,
     },
     outlineWidth: {
       displayName: "Outline Width",
@@ -457,6 +523,7 @@ export const avatarNode = Noodl.defineReactNode({
       tooltip: {
         standard: "The width of the Outline.",
       },
+      allowVisualStates: true,
     },
     label: {
       group: "Accessibility",
@@ -493,22 +560,50 @@ export const avatarNode = Noodl.defineReactNode({
       default: 0,
     },
   },
-  // TODO: How to set the outputs?
   outputProps: {
     outDesiredSize: {
       displayName: "Size",
       type: "number",
       group: "Avatar",
     },
+    onClick: {
+      displayName: "On Click",
+      type: "signal",
+      group: "Events",
+    },
+    onFocus: {
+      displayName: "Focused",
+      type: "signal",
+      group: "Focus",
+    },
+    onBlur: {
+      displayName: "Focus Lost",
+      type: "signal",
+      group: "Focus",
+    },
     onMouseEnter: {
       displayName: "Hover Start",
       type: "signal",
       group: "Hover Events",
+      // @ts-expect-error
+      props: {
+        onMouseEnter() {
+          this.setVisualStates(["hover"]);
+          this.sendSignalOnOutput("onMouseEnter");
+        },
+      },
     },
     onMouseLeave: {
       displayName: "Hover End",
       type: "signal",
       group: "Hover Events",
+      // @ts-expect-error
+      props: {
+        onMouseLeave() {
+          this.setVisualStates([]);
+          this.sendSignalOnOutput("onMouseLeave");
+        },
+      },
     },
   },
   inputCss: {
@@ -533,6 +628,7 @@ export const avatarNode = Noodl.defineReactNode({
         defaultUnit: "px",
         marginPaddingComp: "margin-right",
       },
+      allowVisualStates: true,
     },
     marginTop: {
       index: 3,
@@ -544,6 +640,7 @@ export const avatarNode = Noodl.defineReactNode({
         defaultUnit: "px",
         marginPaddingComp: "margin-top",
       },
+      allowVisualStates: true,
     },
     marginBottom: {
       index: 4,
@@ -555,6 +652,7 @@ export const avatarNode = Noodl.defineReactNode({
         defaultUnit: "px",
         marginPaddingComp: "margin-bottom",
       },
+      allowVisualStates: true,
     },
   },
 });
