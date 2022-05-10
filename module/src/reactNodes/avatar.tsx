@@ -54,6 +54,7 @@ interface AvatarProps {
   profileScale: number;
   profileOriginX: string;
   profileOriginY: string;
+  profileGrayscale: string;
 
   style: React.CSSProperties;
 
@@ -107,9 +108,9 @@ function AvatarComponent({
   outlineStyle,
   outlineColor,
   outlineWidth,
-  
+
   src,
-  
+
   text,
   textScale,
   textColor,
@@ -127,6 +128,7 @@ function AvatarComponent({
   profileScale,
   profileOriginX,
   profileOriginY,
+  profileGrayscale,
 
   style,
 
@@ -205,6 +207,8 @@ function AvatarComponent({
         y: profileOriginY,
       });
 
+      const filter = profileGrayscale !== "0%" ? `grayscale(${profileGrayscale})` : "";
+
       return (
         <img
           style={{
@@ -212,6 +216,7 @@ function AvatarComponent({
             height: "100%",
             transform,
             transformOrigin,
+            filter,
           }}
           src={src}
           alt="avatar"
@@ -277,14 +282,11 @@ export const avatarNode = Noodl.defineReactNode({
   getReactComponent() {
     return AvatarComponent;
   },
-  // @ts-ignore
   visualStates: [
     { name: "neutral", label: "Neutral" },
     { name: "hover", label: "Hover" },
   ],
-  // @ts-ignore
   dynamicports: [
-    // TODO: dynamicports
     {
       condition: "size = custom",
       inputs: ["sizeCustom"],
@@ -454,6 +456,20 @@ export const avatarNode = Noodl.defineReactNode({
         defaultUnit: "%",
       },
       default: 50,
+      allowVisualStates: true,
+    },
+    profileGrayscale: {
+      displayName: "Grayscale",
+      group: "Avatar Profile",
+      type: {
+        name: "number",
+        units: ["%"],
+        defaultUnit: "%",
+      },
+      tooltip: {
+        standard: "Whether the profile should be grayscaled.",
+      },
+      default: 0,
       allowVisualStates: true,
     },
     outlineStyle: {
