@@ -192,9 +192,6 @@ function AvatarComponent({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: backgroundColor || "transparent",
-    backgroundPosition: "center center",
-    backgroundRepeat: "no-repeat",
-    backgroundSize: "cover",
   };
 
   // default icon
