@@ -56,11 +56,29 @@ export interface OutlineOptions {
   style: React.CSSProperties["outlineStyle"];
   color: string | undefined;
   width: string | undefined;
+  spacing: number | undefined;
+  contentWidth: string | undefined;
 }
 
-export function createOutline({ style, color, width }: OutlineOptions) {
-  if (!width) return "none";
-  return `${style || 'solid'} ${width || 0} ${color || "rgb(0, 0, 0)"}`;
+export function createOutline({
+  style,
+  color,
+  width,
+  spacing,
+  contentWidth,
+}: OutlineOptions) {
+  if (!width) return {};
+
+  const smoothWidth = Math.round(parseInt(width) * 100) / 100;
+  const desiredBorder = smoothWidth + Math.max(spacing || 0, 0);
+
+  return {
+    margin: `-${desiredBorder}px`,
+    padding: `${spacing}px`,
+    width: `calc(${contentWidth} + ${desiredBorder}px * 2)`,
+    height: `calc(${contentWidth} + ${desiredBorder}px * 2)`,
+    border: `${smoothWidth}px ${style || "solid"} ${color || "rgb(0, 0, 0)"}`,
+  };
 }
 
 export interface TransformOptions {

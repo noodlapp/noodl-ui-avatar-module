@@ -34,6 +34,7 @@ interface AvatarProps {
   outlineStyle: React.CSSProperties["outlineStyle"];
   outlineColor: React.CSSProperties["color"];
   outlineWidth: string | undefined;
+  outlineSpacing: number | undefined;
 
   src: string | undefined;
 
@@ -105,9 +106,11 @@ function AvatarComponent({
   size,
   sizeCustom,
   backgroundColor,
+
   outlineStyle,
   outlineColor,
   outlineWidth,
+  outlineSpacing,
 
   src,
 
@@ -152,8 +155,6 @@ function AvatarComponent({
   }
 
   const desiredSize = calculateDesiredSize();
-  const borderRadius = appearance === "circle" ? "50%" : "3px";
-
   outDesiredSize && outDesiredSize(parseInt(desiredSize));
 
   const rootStyle = {
@@ -166,18 +167,28 @@ function AvatarComponent({
 
   const outline = createOutline({
     style: outlineStyle,
-    width: outlineColor,
-    color: outlineWidth,
+    width: outlineWidth,
+    color: outlineColor,
+    spacing: outlineSpacing,
+    contentWidth: desiredSize,
   });
 
-  const imageStyle = {
-    borderRadius,
-    outline,
+  const mainStyle = {
+    display: "block",
+    borderRadius: appearance === "circle" ? "50%" : "3px",
     overflow: "hidden",
-    display: "flex",
     width: "100%",
     height: "100%",
     flex: "1 1 100%",
+    ...outline,
+  };
+
+  const innerStyle = {
+    borderRadius: appearance === "circle" ? "50%" : "0px",
+    overflow: "hidden",
+    width: "100%",
+    height: "100%",
+    display: "flex",
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: backgroundColor || "transparent",
@@ -188,7 +199,7 @@ function AvatarComponent({
 
   // default icon
   if (!src || !text) {
-    imageStyle.backgroundColor = "#a9a9a9";
+    innerStyle.backgroundColor = "#a9a9a9";
   }
 
   function content() {
@@ -207,7 +218,8 @@ function AvatarComponent({
         y: profileOriginY,
       });
 
-      const filter = profileGrayscale !== "0%" ? `grayscale(${profileGrayscale})` : "";
+      const filter =
+        profileGrayscale !== "0%" ? `grayscale(${profileGrayscale})` : "";
 
       return (
         <img
@@ -253,7 +265,7 @@ function AvatarComponent({
   return (
     <span className="avatar" style={rootStyle}>
       <span
-        style={imageStyle}
+        style={mainStyle}
         title={tooltip}
         aria-label={label}
         {...pointerProps({
@@ -271,7 +283,9 @@ function AvatarComponent({
         }}
         {...appendAttributes}
       >
-        {Boolean(children) ? { ...children } : content()}
+        <span style={innerStyle}>
+          {Boolean(children) ? children : content()}
+        </span>
       </span>
     </span>
   );
@@ -540,6 +554,17 @@ export const avatarNode = Noodl.defineReactNode({
         standard: "The width of the Outline.",
       },
       allowVisualStates: true,
+    },
+    outlineSpacing: {
+      displayName: "Outline Spacing",
+      group: "Outline",
+      type: {
+        name: "number",
+      },
+      tooltip: {
+        standard: "The space between the avatar and the Outline.",
+      },
+      default: 0,
     },
     label: {
       group: "Accessibility",
